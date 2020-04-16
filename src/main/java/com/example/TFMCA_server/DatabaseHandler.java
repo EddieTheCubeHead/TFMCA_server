@@ -37,19 +37,6 @@ public class DatabaseHandler {
         insert_user.close();
     }
 
-    public static void insertGuest (String name) throws SQLException {
-        PreparedStatement insert_guest = null;
-
-        String insert_string = "INSERT INTO tfmca.users (userName, isGuest) VALUES (?, 1)";
-
-        insert_guest = db_connection.prepareStatement(insert_string);
-        insert_guest.setString(1, name);
-        System.out.println("Creating guest " + name);
-        insert_guest.executeUpdate();
-
-        insert_guest.close();
-    }
-
     public static void removeUser (String name) throws SQLException {
         PreparedStatement remove_user = null;
 
@@ -63,7 +50,7 @@ public class DatabaseHandler {
         remove_user.close();
     }
 
-    public static ResultSet get_user(String username) throws SQLException {
+    public static ResultSet getUser(String username) throws SQLException {
         PreparedStatement check_user = null;
 
         String check_string = "SELECT * FROM tfmca.users WHERE userName = ?";
@@ -72,18 +59,6 @@ public class DatabaseHandler {
         check_user.setString(1, username);
 
         return check_user.executeQuery();
-    }
-
-    public static void pruneGuests() throws SQLException {
-        PreparedStatement remove_guests = null;
-
-        String remove_string = "DELETE FROM tfmca.users WHERE isGuest=1";
-
-        remove_guests = db_connection.prepareStatement(remove_string);
-        System.out.println("Deleted guest users.");
-        remove_guests.executeUpdate();
-
-        remove_guests.close();
     }
 
     public static void createGame(String user, String code) throws SQLException {
@@ -96,5 +71,27 @@ public class DatabaseHandler {
         create_game.setString(2, code);
         System.out.println("Game created");
         create_game.executeUpdate();
+    }
+
+    public static ResultSet getGame(String code) throws SQLException {
+        PreparedStatement get_game;
+
+        String get_game_string = "SELECT * FROM tfmca.games WHERE code = ?";
+
+        get_game = db_connection.prepareStatement(get_game_string);
+        get_game.setString(1, code);
+        return get_game.executeQuery();
+    }
+
+    public static void addPlayer(String user, String code, String player_position) throws SQLException {
+        PreparedStatement add_player = null;
+
+        String add_player_string = String.format("UPDATE tfmca.games SET %s = (SELECT userName FROM tfmca.users WHERE userName=?) WHERE code = ?", player_position);
+
+        add_player = db_connection.prepareStatement(add_player_string);
+        add_player.setString(1, user);
+        add_player.setString(2, code);
+        add_player.executeUpdate();
+        add_player.close();
     }
 }

@@ -53,12 +53,14 @@ public class SessionIdHandler {
      * kuluttua viimeisestä interaktiosta.
      */
     public static Boolean verify_session (String user, String session_id) {
+
         if (!session_id_map.containsKey(user)) {
             return false;
         }
 
         UserIdData session_data = session_id_map.get(user);
         String user_session_id = session_data.getSessionId();
+        System.out.println(user_session_id);
         LocalDateTime last_verification_time = session_data.getLastVerification();
         Duration since_last_verification = Duration.between(last_verification_time, LocalDateTime.now());
         long duration_minutes = Math.abs(since_last_verification.toMinutes());

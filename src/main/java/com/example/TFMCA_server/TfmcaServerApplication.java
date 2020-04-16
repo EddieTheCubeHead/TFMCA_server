@@ -14,11 +14,7 @@ public class TfmcaServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TfmcaServerApplication.class, args);
 		DatabaseHandler.initialize();
-		try {
-			DatabaseHandler.pruneGuests();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+
 		IdPruner id_pruner = new IdPruner();
 		Timer id_pruner_timer = new Timer();
 
@@ -30,4 +26,8 @@ class IdPruner extends TimerTask {
 	public void run() {
 		SessionIdHandler.pruneIdMap();
 	}
+}
+
+class StompTest extends TimerTask {
+	public void run() {}
 }

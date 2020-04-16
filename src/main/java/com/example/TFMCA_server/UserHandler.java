@@ -41,9 +41,12 @@ public class UserHandler {
         String password_hash = hashPassword(password_raw);
         System.out.println("Hashed password: " + password_hash);
         try {
-            if (DatabaseHandler.get_user(username).next()) {
+            ResultSet user_rs = DatabaseHandler.getUser(username);
+            if (user_rs.next()) {
+                user_rs.close();
                 throw new InvalidUsernameException("This username already exists.");
             }
+            user_rs.close();
             DatabaseHandler.insertUser(username, password_hash);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -53,9 +56,10 @@ public class UserHandler {
 
     public static String login_user(String username, String password_raw) throws InvalidUsernameException, InvalidPasswordException {
         try {
-            ResultSet user_rs = DatabaseHandler.get_user(username);
+            ResultSet user_rs = DatabaseHandler.getUser(username);
             if (!user_rs.next()) {
                 System.out.println("User doesn't exist!");
+                user_rs.close();
                 throw new InvalidUsernameException("Username doesn't exist.");
             }
 
@@ -64,6 +68,8 @@ public class UserHandler {
             byte[] salt = Base64.decode(existing_password_data[1]);
 
             String user_hash = hashPassword(password_raw, salt);
+
+            user_rs.close();
 
             if (user_hash.equals(existing_password)) {
                 return SessionIdHandler.create_session_id(username);
