@@ -19,6 +19,7 @@ public class TfmcaServerApplication {
 		Timer id_pruner_timer = new Timer();
 
 		id_pruner_timer.schedule(id_pruner, 100, ID_PRUNER_LOOP_MINS * 60000);
+		WebSocketHandler.initHeartbeat();
 	}
 }
 
@@ -26,8 +27,4 @@ class IdPruner extends TimerTask {
 	public void run() {
 		SessionIdHandler.pruneIdMap();
 	}
-}
-
-class StompTest extends TimerTask {
-	public void run() {}
 }

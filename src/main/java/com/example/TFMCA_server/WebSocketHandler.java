@@ -2,14 +2,20 @@ package com.example.TFMCA_server;
 
 import com.example.TFMCA_server.errors.InvalidPasswordException;
 import com.example.TFMCA_server.errors.InvalidUsernameException;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
+
 public class WebSocketHandler extends AbstractWebSocketHandler {
+    static List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
+
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         String[] contents = message.getPayload().split(Pattern.quote(";"));
@@ -18,6 +24,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
         String password;
         String session_id;
         String game_code;
+        System.out.println("WebSocket message from session " + session.getId());
 
         switch (identifier) {
             //Eivät vaadi session_id:tä:
@@ -55,7 +62,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                     session.sendMessage(new TextMessage("session_exception;Invalid session"));
                 } else {
                     game_code = GameSessionHandler.createGame(session, user);
-                    session.sendMessage(new TextMessage("game_created;" + game_code));
+                    session.sendMessage(new TextMessage("game_created; " + game_code));
                 }
                 break;
 
@@ -72,6 +79,74 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
 
             default:
                 System.out.println("Unrecognized message:" + message.getPayload());
+        }
+    }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        sessions.add(session);
+        session.setBinaryMessageSizeLimit(1024 * 1024);
+        session.setTextMessageSizeLimit(1024 * 1024);
+
+        System.out.println(session.getAcceptedProtocol());
+        System.out.println(session.getHandshakeHeaders());
+        System.out.println(session.getPrincipal());
+        System.out.println(session.getLocalAddress());
+        System.out.println(session.getRemoteAddress());
+        System.out.println(session.getClass());
+        System.out.println(session.getUri());
+    }
+
+    public static void sendToSessions(ArrayList<String> session_id_list, String message) throws IOException {
+        for (WebSocketSession session : sessions) {
+            if (session_id_list.contains(session.getId())) {
+                if (session.isOpen()) {
+                    System.out.println("WebSocket sending message to session  " + session.getId());
+                    session.sendMessage(new TextMessage(message));
+                } else {
+                    System.out.println("WebSocket unable to send message to session " + session.getId());
+                }
+            }
+        }
+    }
+
+    public static void sendToAll(String message) throws IOException {
+        for (WebSocketSession session : sessions) {
+            if (session.isOpen()) {
+                System.out.println("WebSocket sending message to session  " + session.getId());
+                session.sendMessage(new TextMessage(message));
+            } else {
+                System.out.println("WebSocket unable to send message to session " + session.getId());
+            }
+        }
+    }
+
+
+    static void pingAll() throws IOException {
+        for (WebSocketSession session : sessions) {
+            if (session.isOpen()) {
+                session.sendMessage(new PingMessage());
+            } else {
+                System.out.println("Unable to ping session " + session.getId());
+                sessions.remove(session);
+            }
+        }
+    }
+
+    public static void initHeartbeat() {
+        SessionHeartbeat session_heartbeat = new SessionHeartbeat();
+        Timer session_heartbeat_timer = new Timer();
+
+        session_heartbeat_timer.schedule(session_heartbeat, 100, 10000);
+    }
+}
+
+class SessionHeartbeat extends TimerTask {
+    public void run() {
+        try {
+            WebSocketHandler.pingAll();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

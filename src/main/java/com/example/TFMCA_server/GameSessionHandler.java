@@ -6,13 +6,11 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameSessionHandler {
-    private static HashMap<String, ArrayList<WebSocketSession>> games = new HashMap<>();
+    private static HashMap<String, ArrayList<String>> games = new HashMap<>();
 
     public static String createGame(WebSocketSession session, String user) {
 
@@ -33,10 +31,12 @@ public class GameSessionHandler {
                     .toString();
         } while (games.containsKey(game_code));
 
+        System.out.println("Game code created succesfully: " + game_code);
+
         try {
             DatabaseHandler.createGame(user, game_code);
-            games.put(game_code, new ArrayList<>(Collections.singletonList(session)));
-            sendMessage(game_code, null, "testi1");
+            games.put(game_code, new ArrayList<>(Collections.singletonList(session.getId())));
+
             return game_code;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -49,7 +49,7 @@ public class GameSessionHandler {
             return false;
         }
 
-        games.get(game_code).add(session);
+        games.get(game_code).add(session.getId());
         String position = String.format("player%d", games.get(game_code).size());
         try {
             System.out.println(user + " " + game_code + " " + position);
@@ -57,26 +57,7 @@ public class GameSessionHandler {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        sendMessage(game_code, null, "testi2");
 
         return true;
-    }
-
-    public static void sendMessage(String game_code, WebSocketSession session, String message) {
-        for (WebSocketSession game_session : games.get(game_code)) {
-            if (session != null && session == game_session) {
-                continue;
-            }
-            try {
-                if (game_session.isOpen()) {
-                    System.out.println("WebSocket sending message: " + game_session.getId());
-                    game_session.sendMessage(new TextMessage("testi"));
-                } else {
-                    System.out.println("WebSocket failed to send a message: " + game_session.getId());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
