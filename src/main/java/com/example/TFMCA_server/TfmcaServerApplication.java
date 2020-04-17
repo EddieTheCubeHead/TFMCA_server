@@ -14,15 +14,12 @@ public class TfmcaServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TfmcaServerApplication.class, args);
 		DatabaseHandler.initialize();
-		try {
-			DatabaseHandler.pruneGuests();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+
 		IdPruner id_pruner = new IdPruner();
 		Timer id_pruner_timer = new Timer();
 
 		id_pruner_timer.schedule(id_pruner, 100, ID_PRUNER_LOOP_MINS * 60000);
+		WebSocketHandler.initHeartbeat();
 	}
 }
 

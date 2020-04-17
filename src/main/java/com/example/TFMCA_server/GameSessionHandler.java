@@ -1,16 +1,16 @@
 package com.example.TFMCA_server;
 
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameSessionHandler {
-    private static HashMap<String, ArrayList<WebSocketSession>> games = new HashMap<>();
+    private static HashMap<String, ArrayList<String>> games = new HashMap<>();
 
     public static String createGame(WebSocketSession session, String user) {
 
@@ -31,10 +31,12 @@ public class GameSessionHandler {
                     .toString();
         } while (games.containsKey(game_code));
 
+        System.out.println("Game code created succesfully: " + game_code);
+
         try {
-            System.out.println(user);
             DatabaseHandler.createGame(user, game_code);
-            games.put(game_code, new ArrayList<WebSocketSession>(Collections.singletonList(session)));
+            games.put(game_code, new ArrayList<>(Collections.singletonList(session.getId())));
+
             return game_code;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -42,27 +44,20 @@ public class GameSessionHandler {
         }
     }
 
-    public static void joinGame(String game_id, WebSocketSession session, String user) {
+    public static Boolean joinGame(String game_code, WebSocketSession session, String user) {
+        if (!games.containsKey(game_code)) {
+            return false;
+        }
 
-    }
+        games.get(game_code).add(session.getId());
+        String position = String.format("player%d", games.get(game_code).size());
+        try {
+            System.out.println(user + " " + game_code + " " + position);
+            DatabaseHandler.addPlayer(user, game_code, position);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-    public static void sendMessage(String game_id, String message, String user) {
-
-    }
-}
-
-class GameData {
-    private ArrayList<WebSocketSession> sessions;
-    private Integer game_id;
-
-    public ArrayList<WebSocketSession> getSessions() {return sessions;}
-    public Integer getGameId() {return game_id;}
-
-    public void addSession(WebSocketSession session) {
-        sessions.add(session);
-    }
-
-    public GameData(Integer game_id) {
-        this.game_id = game_id;
+        return true;
     }
 }
