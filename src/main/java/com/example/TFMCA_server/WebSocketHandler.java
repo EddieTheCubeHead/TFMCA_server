@@ -24,11 +24,13 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
         String password;
         String session_id;
         String game_code;
+        String packet_type;
+        String gson_packet;
         System.out.println("WebSocket message from session " + session.getId());
 
         switch (identifier) {
             //Eivät vaadi session_id:tä:
-            case("new_user"):
+            case "new_user":
                 try {
                     user = contents[1];
                     password = contents[2];
@@ -41,7 +43,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 }
                 break;
 
-            case("login"):
+            case "login":
                 try {
                     user = contents[1];
                     password = contents[2];
@@ -55,18 +57,18 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 break;
 
             //Validin session_id:n vaativat:
-            case("create_game"):
+            case "create_game":
                 user = contents[1];
                 session_id = contents[2];
                 if (!SessionIdHandler.verify_session(user, session_id)) {
                     session.sendMessage(new TextMessage("session_exception;Invalid session"));
                 } else {
-                    game_code = GameSessionHandler.createGame(session, user);
-                    session.sendMessage(new TextMessage("game_created; " + game_code));
+                    game_code = GameSessionHandler.createGame(session, message.getPayload());
+                    session.sendMessage(new TextMessage("game_created;" + game_code));
                 }
                 break;
 
-            case ("join_game"):
+            case "join_game":
                 user = contents[1];
                 session_id = contents[2];
                 game_code = contents[3];
@@ -75,6 +77,20 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 } else if (!GameSessionHandler.joinGame(game_code, session, user)){
                     session.sendMessage(new TextMessage("join_exception;Unable to join game"));
                 }
+                break;
+
+            //Pelin tapahtumat
+            case "game_action":
+                user = contents[1];
+                session_id = contents[2];
+                game_code = contents[3];
+                packet_type = contents[4];
+                gson_packet = contents[5];
+                if (!SessionIdHandler.verify_session(user, session_id)) {
+                    session.sendMessage(new TextMessage("session_exception;Invalid session"));
+                }
+                //TODO databaseen kirjaaminen
+                GameSessionHandler.sendMessage(game_code, session, String.format("game_action;%s;%s", packet_type, gson_packet));
                 break;
 
             default:
@@ -87,14 +103,6 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
         sessions.add(session);
         session.setBinaryMessageSizeLimit(1024 * 1024);
         session.setTextMessageSizeLimit(1024 * 1024);
-
-        System.out.println(session.getAcceptedProtocol());
-        System.out.println(session.getHandshakeHeaders());
-        System.out.println(session.getPrincipal());
-        System.out.println(session.getLocalAddress());
-        System.out.println(session.getRemoteAddress());
-        System.out.println(session.getClass());
-        System.out.println(session.getUri());
     }
 
     public static void sendToSessions(ArrayList<String> session_id_list, String message) throws IOException {

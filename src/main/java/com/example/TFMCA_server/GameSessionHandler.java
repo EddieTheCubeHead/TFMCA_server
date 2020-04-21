@@ -1,5 +1,8 @@
 package com.example.TFMCA_server;
 
+import com.example.TFMCA_server.DatabaseHandler;
+import com.example.TFMCA_server.WebSocketHandler;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -8,11 +11,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Pattern;
 
 public class GameSessionHandler {
     private static HashMap<String, ArrayList<String>> games = new HashMap<>();
 
-    public static String createGame(WebSocketSession session, String user) {
+    public static String createGame(WebSocketSession session, String message) {
 
         //TODO tämä funktioon, koska käytetään kahdessa paikassa
         String game_code;
@@ -34,7 +38,15 @@ public class GameSessionHandler {
         System.out.println("Game code created succesfully: " + game_code);
 
         try {
-            DatabaseHandler.createGame(user, game_code);
+            String [] game_data = message.split(Pattern.quote(";"));
+            Integer map = Integer.parseInt(game_data[9]);
+            Boolean corporate_era = Boolean.parseBoolean(game_data[3]);
+            Boolean prelude = Boolean.parseBoolean(game_data[4]);
+            Boolean colonies = Boolean.parseBoolean(game_data[5]);
+            Boolean venus = Boolean.parseBoolean(game_data[6]);
+            Boolean turmoil = Boolean.parseBoolean(game_data[7]);
+            Boolean extra_corporations = Boolean.parseBoolean(game_data[8]);
+            DatabaseHandler.createGame(game_data[1], game_code, map, corporate_era, prelude, venus, colonies, turmoil, extra_corporations);
             games.put(game_code, new ArrayList<>(Collections.singletonList(session.getId())));
 
             return game_code;
@@ -57,7 +69,27 @@ public class GameSessionHandler {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
+        sendMessage(game_code, session, "player_joined;" + user);
         return true;
+    }
+
+    public static void sendMessage(String game_code, WebSocketSession session, String message) {
+        if (!games.containsKey(game_code)) {
+            return;
+        }
+
+        ArrayList<String> sessions_to_send = games.get(game_code);
+
+        if (session != null) {
+            sessions_to_send.remove(session.getId());
+        }
+
+        System.out.println("Sending messages to sessions in game " + game_code);
+
+        try {
+            WebSocketHandler.sendToSessions(sessions_to_send, message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

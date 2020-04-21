@@ -6,7 +6,7 @@ import java.sql.*;
 public class DatabaseHandler {
     //Driver name, database URL
     private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    private static final String DATABASE_URL = "jdbc:mysql://localhost/tfmca";
+    private static final String DATABASE_URL = "jdbc:mysql://localhost/tfmca?serverTimezone=UTC";
 
     private static final String DB_USER = System.getenv("TFMCA_DB_USER");
     private static final String DB_PASSWORD = System.getenv("TFMCA_DB_PASSWORD");
@@ -61,16 +61,23 @@ public class DatabaseHandler {
         return check_user.executeQuery();
     }
 
-    public static void createGame(String user, String code) throws SQLException {
+    public static void createGame(String user, String code, Integer map, Boolean corporate_era, Boolean prelude, Boolean venus, Boolean colonies, Boolean turmoil, Boolean extra_corporations) throws SQLException {
         PreparedStatement create_game = null;
 
-        String create_string = "INSERT INTO tfmca.games (player1, state, code) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 'setup', ?)";
+        String create_string = "INSERT INTO tfmca.games (player1, state, code, map, corporateEra, prelude, venus, colonies, turmoil, extraCorporations) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 0, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         create_game = db_connection.prepareStatement(create_string);
         create_game.setString(1, user);
         create_game.setString(2, code);
-        System.out.println("Game created");
+        create_game.setInt(3, map);
+        create_game.setInt(4, corporate_era ? 1 : 0);
+        create_game.setInt(5, prelude ? 1 : 0);
+        create_game.setInt(6, venus ? 1 : 0);
+        create_game.setInt(7, colonies ? 1 : 0);
+        create_game.setInt(8, turmoil ? 1 : 0);
+        create_game.setInt(9, extra_corporations ? 1 : 0);
         create_game.executeUpdate();
+        System.out.println("Game created");
     }
 
     public static ResultSet getGame(String code) throws SQLException {
