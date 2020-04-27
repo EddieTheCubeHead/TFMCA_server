@@ -6,7 +6,7 @@ import java.sql.*;
 public class DatabaseHandler {
     //Driver name, database URL
     private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    private static final String DATABASE_URL = "jdbc:mysql://localhost/tfmca?serverTimezone=UTC";
+    private static final String DATABASE_URL = System.getenv("DB_URL");
 
     private static final String DB_USER = System.getenv("TFMCA_DB_USER");
     private static final String DB_PASSWORD = System.getenv("TFMCA_DB_PASSWORD");

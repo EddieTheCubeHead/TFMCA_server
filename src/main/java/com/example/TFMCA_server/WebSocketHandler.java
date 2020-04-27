@@ -94,7 +94,7 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 break;
 
             default:
-                System.out.println("Unrecognized message:" + message.getPayload());
+                System.out.println("Unrecognized message: " + message.getPayload());
         }
     }
 
@@ -117,18 +117,6 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
             }
         }
     }
-
-    public static void sendToAll(String message) throws IOException {
-        for (WebSocketSession session : sessions) {
-            if (session.isOpen()) {
-                System.out.println("WebSocket sending message to session  " + session.getId());
-                session.sendMessage(new TextMessage(message));
-            } else {
-                System.out.println("WebSocket unable to send message to session " + session.getId());
-            }
-        }
-    }
-
 
     static void pingAll() throws IOException {
         for (WebSocketSession session : sessions) {
