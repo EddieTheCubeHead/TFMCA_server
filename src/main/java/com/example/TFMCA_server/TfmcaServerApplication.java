@@ -13,6 +13,12 @@ public class TfmcaServerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(TfmcaServerApplication.class, args);
+		System.out.println("QA");
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		DatabaseHandler.initialize();
 
 		IdPruner id_pruner = new IdPruner();

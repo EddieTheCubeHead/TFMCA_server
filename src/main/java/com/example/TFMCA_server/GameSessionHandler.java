@@ -39,14 +39,17 @@ public class GameSessionHandler {
 
         try {
             String [] game_data = message.split(Pattern.quote(";"));
-            Integer map = Integer.parseInt(game_data[9]);
+            Integer map = Integer.parseInt(game_data[12]);
             Boolean corporate_era = Boolean.parseBoolean(game_data[3]);
             Boolean prelude = Boolean.parseBoolean(game_data[4]);
             Boolean colonies = Boolean.parseBoolean(game_data[5]);
             Boolean venus = Boolean.parseBoolean(game_data[6]);
             Boolean turmoil = Boolean.parseBoolean(game_data[7]);
             Boolean extra_corporations = Boolean.parseBoolean(game_data[8]);
-            DatabaseHandler.createGame(game_data[1], game_code, map, corporate_era, prelude, venus, colonies, turmoil, extra_corporations);
+            Boolean world_government_terraforming = Boolean.parseBoolean(game_data[9]);
+            Boolean must_max_venus = Boolean.parseBoolean(game_data[10]);
+            Boolean turmoil_terraforming_revision = Boolean.parseBoolean(game_data[11]);
+            DatabaseHandler.createGame(game_data[1], game_code, map, corporate_era, prelude, venus, colonies, turmoil, extra_corporations, world_government_terraforming, must_max_venus, turmoil_terraforming_revision);
             games.put(game_code, new ArrayList<>(Collections.singletonList(session.getId())));
 
             return game_code;

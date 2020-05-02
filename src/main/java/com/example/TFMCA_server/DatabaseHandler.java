@@ -61,10 +61,21 @@ public class DatabaseHandler {
         return check_user.executeQuery();
     }
 
-    public static void createGame(String user, String code, Integer map, Boolean corporate_era, Boolean prelude, Boolean venus, Boolean colonies, Boolean turmoil, Boolean extra_corporations) throws SQLException {
+    public static void createGame(String user,
+                                  String code,
+                                  Integer map,
+                                  Boolean corporate_era,
+                                  Boolean prelude,
+                                  Boolean venus,
+                                  Boolean colonies,
+                                  Boolean turmoil,
+                                  Boolean extra_corporations,
+                                  Boolean world_government_terraforming,
+                                  Boolean must_max_venus,
+                                  Boolean turmoil_terraforming_revision) throws SQLException {
         PreparedStatement create_game = null;
 
-        String create_string = "INSERT INTO tfmca.games (player1, state, code, map, corporateEra, prelude, venus, colonies, turmoil, extraCorporations) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 0, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String create_string = "INSERT INTO tfmca.games (player1, gameState, gameCode, gameMap, corporateEra, prelude, venus, colonies, turmoil, extraCorporations, worldGovernmentTerragorming, mustMaxVenus, turmoilTerraformingRevision) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         create_game = db_connection.prepareStatement(create_string);
         create_game.setString(1, user);
@@ -76,6 +87,9 @@ public class DatabaseHandler {
         create_game.setInt(7, colonies ? 1 : 0);
         create_game.setInt(8, turmoil ? 1 : 0);
         create_game.setInt(9, extra_corporations ? 1 : 0);
+        create_game.setInt(10, world_government_terraforming ? 1 : 0);
+        create_game.setInt(11, must_max_venus ? 1 : 0);
+        create_game.setInt(12, turmoil_terraforming_revision ? 1 : 0);
         create_game.executeUpdate();
         System.out.println("Game created");
     }
