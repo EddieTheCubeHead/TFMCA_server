@@ -67,34 +67,14 @@ public class DatabaseHandler {
     }
 
     public static void createGame(String user,
-                                  String code,
-                                  Integer map,
-                                  Boolean corporate_era,
-                                  Boolean prelude,
-                                  Boolean venus,
-                                  Boolean colonies,
-                                  Boolean turmoil,
-                                  Boolean extra_corporations,
-                                  Boolean world_government_terraforming,
-                                  Boolean must_max_venus,
-                                  Boolean turmoil_terraforming_revision) throws SQLException {
+                                  String code) throws SQLException {
         PreparedStatement create_game = null;
 
-        String create_string = "INSERT INTO tfmca.games (player1, gameState, gameCode, gameMap, corporateEra, prelude, venus, colonies, turmoil, extraCorporations, worldGovernmentTerragorming, mustMaxVenus, turmoilTerraformingRevision) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String create_string = "INSERT INTO tfmca.games (player1, gameState, gameCode) VALUES ((SELECT userName FROM tfmca.users WHERE userName=?), 0, ?)";
 
         create_game = db_connection.prepareStatement(create_string);
         create_game.setString(1, user);
         create_game.setString(2, code);
-        create_game.setInt(3, map);
-        create_game.setInt(4, corporate_era ? 1 : 0);
-        create_game.setInt(5, prelude ? 1 : 0);
-        create_game.setInt(6, venus ? 1 : 0);
-        create_game.setInt(7, colonies ? 1 : 0);
-        create_game.setInt(8, turmoil ? 1 : 0);
-        create_game.setInt(9, extra_corporations ? 1 : 0);
-        create_game.setInt(10, world_government_terraforming ? 1 : 0);
-        create_game.setInt(11, must_max_venus ? 1 : 0);
-        create_game.setInt(12, turmoil_terraforming_revision ? 1 : 0);
         create_game.executeUpdate();
         create_game.close();
         System.out.println("Game created");
@@ -103,7 +83,7 @@ public class DatabaseHandler {
     public static Integer getGameId(String code) throws SQLException {
         PreparedStatement get_game;
 
-        String get_game_string = "SELECT * FROM tfmca.games WHERE code = ?";
+        String get_game_string = "SELECT * FROM tfmca.games WHERE gameCode = ?";
 
         get_game = db_connection.prepareStatement(get_game_string);
         get_game.setString(1, code);
@@ -114,10 +94,34 @@ public class DatabaseHandler {
         return rs.getInt("id");
     }
 
+    public static String getGameUsers(String code) throws SQLException {
+        PreparedStatement get_game;
+
+        String get_game_string = "SELECT * FROM tfmca.games WHERE gameCode = ?";
+
+        get_game = db_connection.prepareStatement(get_game_string);
+        get_game.setString(1, code);
+        ResultSet rs = get_game.executeQuery();
+        if (!rs.next()) {
+            rs.close();
+            return null;
+        }
+        StringBuilder names = new StringBuilder();
+        for (int i = 1; i < 6 ; i++) {
+            names.append(";");
+            if (rs.getString(String.format("player%d", i)) == null) {
+                continue;
+            }
+            names.append(rs.getString(String.format("player%d", i)));
+        }
+        rs.close();
+        return names.toString();
+    }
+
     public static void addPlayer(String user, String code, String player_position) throws SQLException {
         PreparedStatement add_player = null;
 
-        String add_player_string = String.format("UPDATE tfmca.games SET %s = (SELECT userName FROM tfmca.users WHERE userName=?) WHERE code = ?", player_position);
+        String add_player_string = String.format("UPDATE tfmca.games SET %s = (SELECT userName FROM tfmca.users WHERE userName=?) WHERE gameCode = ?", player_position);
 
         add_player = db_connection.prepareStatement(add_player_string);
         add_player.setString(1, user);
@@ -129,7 +133,7 @@ public class DatabaseHandler {
     public static void saveEvent(CardCostPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardcostevents VALUES (parentGame, player, money, steel, titanium, heat, plantResource, floaterResource, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.cardcostevents (parentGame, player, money, steel, titanium, heat, plantResource, floaterResource, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {
@@ -156,7 +160,7 @@ public class DatabaseHandler {
     public static void saveEvent(CardEventPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardplayevents VALUES (parentGame, player, card, metadata, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, player, card, metadata, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {
@@ -179,7 +183,7 @@ public class DatabaseHandler {
     public static void saveEvent(ResourceEventPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardplayevents VALUES (parentGame, card, changeAmount, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, card, changeAmount, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {
@@ -201,7 +205,7 @@ public class DatabaseHandler {
     public static void saveEvent(TileEventPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardplayevents VALUES (parentGame, player, tileType, xCoord, yCoord, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, player, tileType, xCoord, yCoord, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {

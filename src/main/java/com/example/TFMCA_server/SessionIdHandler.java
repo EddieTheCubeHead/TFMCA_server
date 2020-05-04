@@ -64,6 +64,10 @@ public class SessionIdHandler {
         return false;
     }
 
+    public static void logoutId(String session_id) {
+        session_id_map.remove(session_id);
+    }
+
     public static void pruneIdMap() {
         for(Map.Entry<String, UserIdData> entry : session_id_map.entrySet()) {
             if (Math.abs(Duration.between(entry.getValue().getLastVerification(), LocalDateTime.now()).toMinutes()) < MAX_VERIFICATION_DIFF) {

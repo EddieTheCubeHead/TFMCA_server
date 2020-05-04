@@ -68,6 +68,11 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 }
                 break;
 
+            case "logout":
+                SessionIdHandler.logoutId(contents[1]);
+                session.sendMessage(new TextMessage("logout_successful"));
+                break;
+
             //Validin session_id:n vaativat:
             case "create_game":
                 user = contents[1];
@@ -89,6 +94,21 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 } else if (!GameSessionHandler.joinGame(game_code, session, user)){
                     session.sendMessage(new TextMessage("join_exception;Unable to join game"));
                 }
+                try {
+                    session.sendMessage(new TextMessage("game_joined;" + game_code + DatabaseHandler.getGameUsers(game_code)));
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                break;
+
+            case "start_game":
+                user = contents[1];
+                session_id = contents[2];
+                game_code = contents[3];
+                if (!SessionIdHandler.verify_session(user, session_id)) {
+                    session.sendMessage(new TextMessage("session_exception;Invalid session"));
+                }
+                GameSessionHandler.sendMessage(game_code, session, "game_start");
                 break;
 
             //Pelin tapahtumat

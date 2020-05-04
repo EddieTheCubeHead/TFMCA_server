@@ -39,17 +39,7 @@ public class GameSessionHandler {
 
         try {
             String [] game_data = message.split(Pattern.quote(";"));
-            Integer map = Integer.parseInt(game_data[12]);
-            Boolean corporate_era = Boolean.parseBoolean(game_data[3]);
-            Boolean prelude = Boolean.parseBoolean(game_data[4]);
-            Boolean colonies = Boolean.parseBoolean(game_data[5]);
-            Boolean venus = Boolean.parseBoolean(game_data[6]);
-            Boolean turmoil = Boolean.parseBoolean(game_data[7]);
-            Boolean extra_corporations = Boolean.parseBoolean(game_data[8]);
-            Boolean world_government_terraforming = Boolean.parseBoolean(game_data[9]);
-            Boolean must_max_venus = Boolean.parseBoolean(game_data[10]);
-            Boolean turmoil_terraforming_revision = Boolean.parseBoolean(game_data[11]);
-            DatabaseHandler.createGame(game_data[1], game_code, map, corporate_era, prelude, venus, colonies, turmoil, extra_corporations, world_government_terraforming, must_max_venus, turmoil_terraforming_revision);
+            DatabaseHandler.createGame(game_data[1], game_code);
             games.put(game_code, new ArrayList<>(Collections.singletonList(session.getId())));
 
             return game_code;
@@ -64,7 +54,12 @@ public class GameSessionHandler {
             return false;
         }
 
-        games.get(game_code).add(session.getId());
+        ArrayList<String> game_sessions = games.get(game_code);
+        game_sessions.add(session.getId());
+        games.put(game_code, game_sessions);
+        for (String session_debug : game_sessions) {
+            System.out.println(session_debug);
+        }
         String position = String.format("player%d", games.get(game_code).size());
         try {
             System.out.println(user + " " + game_code + " " + position);
@@ -81,7 +76,11 @@ public class GameSessionHandler {
             return;
         }
 
-        ArrayList<String> sessions_to_send = games.get(game_code);
+        ArrayList<String> sessions_to_send = new ArrayList<>(games.get(game_code));
+
+        for (String session_debug : sessions_to_send) {
+            System.out.println(session_debug);
+        }
 
         if (session != null) {
             sessions_to_send.remove(session.getId());
