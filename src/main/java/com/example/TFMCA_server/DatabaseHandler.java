@@ -1,9 +1,6 @@
 package com.example.TFMCA_server;
 
-import com.example.TFMCA_server.gameEvents.CardCostPacket;
-import com.example.TFMCA_server.gameEvents.CardEventPacket;
-import com.example.TFMCA_server.gameEvents.ResourceEventPacket;
-import com.example.TFMCA_server.gameEvents.TileEventPacket;
+import com.example.TFMCA_server.gameEvents.*;
 
 import java.sql.*;
 
@@ -94,7 +91,7 @@ public class DatabaseHandler {
         return rs.getInt("id");
     }
 
-    public static String getGameUsers(String code) throws SQLException {
+    public static String getGameData(String code) throws SQLException {
         PreparedStatement get_game;
 
         String get_game_string = "SELECT * FROM tfmca.games WHERE gameCode = ?";
@@ -108,13 +105,20 @@ public class DatabaseHandler {
         }
         StringBuilder names = new StringBuilder();
         for (int i = 1; i < 6 ; i++) {
-            names.append(";");
             if (rs.getString(String.format("player%d", i)) == null) {
                 continue;
             }
+            names.append(";");
             names.append(rs.getString(String.format("player%d", i)));
         }
+        for (GameSetting setting : GameSetting.values()) {
+            names.append(";");
+            names.append(rs.getInt(setting.toString()));
+        }
+        names.append(";");
+        names.append(rs.getInt("gameMap"));
         rs.close();
+        System.out.println("Sending game data: " + names.toString());
         return names.toString();
     }
 
@@ -128,6 +132,20 @@ public class DatabaseHandler {
         add_player.setString(2, code);
         add_player.executeUpdate();
         add_player.close();
+    }
+
+    public static void modifySetting(String game_code, GameSetting setting, Boolean value) throws SQLException {
+        PreparedStatement change_setting = null;
+
+        System.out.println(value + " " + Boolean.valueOf(value));
+
+        String setting_string = String.format("UPDATE tfmca.games SET %s = ? WHERE gameCode = ?", setting.toString());
+
+        change_setting = db_connection.prepareStatement(setting_string);
+        change_setting.setInt(1, value ? 1 : 0);
+        change_setting.setString(2, game_code);
+        change_setting.executeUpdate();
+        change_setting.close();
     }
 
     public static void saveEvent(CardCostPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {

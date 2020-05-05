@@ -71,6 +71,10 @@ public class GameSessionHandler {
         return true;
     }
 
+    public static Boolean checkCode(String game_code) {
+        return games.containsKey(game_code);
+    }
+
     public static void sendMessage(String game_code, WebSocketSession session, String message) {
         if (!games.containsKey(game_code)) {
             return;

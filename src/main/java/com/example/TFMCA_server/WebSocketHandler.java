@@ -2,10 +2,7 @@ package com.example.TFMCA_server;
 
 import com.example.TFMCA_server.errors.InvalidPasswordException;
 import com.example.TFMCA_server.errors.InvalidUsernameException;
-import com.example.TFMCA_server.gameEvents.CardCostPacket;
-import com.example.TFMCA_server.gameEvents.CardEventPacket;
-import com.example.TFMCA_server.gameEvents.ResourceEventPacket;
-import com.example.TFMCA_server.gameEvents.TileEventPacket;
+import com.example.TFMCA_server.gameEvents.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.web.socket.PingMessage;
@@ -36,6 +33,8 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
         String game_code;
         String packet_type;
         String gson_packet;
+        String setting_string;
+        String setting_value_string;
         Integer action_number;
         Integer generation;
         System.out.println("WebSocket message from session " + session.getId());
@@ -85,6 +84,11 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                 }
                 break;
 
+            case "check_code":
+                game_code = contents[1];
+                session.sendMessage(new TextMessage(String.format("check_code;%b", GameSessionHandler.checkCode(game_code))));
+                break;
+
             case "join_game":
                 user = contents[1];
                 session_id = contents[2];
@@ -95,10 +99,29 @@ public class WebSocketHandler extends AbstractWebSocketHandler {
                     session.sendMessage(new TextMessage("join_exception;Unable to join game"));
                 }
                 try {
-                    session.sendMessage(new TextMessage("game_joined;" + game_code + DatabaseHandler.getGameUsers(game_code)));
+                    session.sendMessage(new TextMessage("game_joined;" + game_code + DatabaseHandler.getGameData(game_code)));
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+                break;
+
+            case "game_setting":
+                user = contents[1];
+                session_id = contents[2];
+                game_code = contents[3];
+                setting_string = contents[4];
+                setting_value_string = contents[5];
+                if (!(SessionIdHandler.verify_session(user, session_id) && GameSessionHandler.checkCode(game_code))) {
+                    session.sendMessage(new TextMessage("session_exception;Invalid session"));
+                    break;
+                }
+                try {
+                    System.out.println(setting_value_string);
+                    DatabaseHandler.modifySetting(game_code, GameSetting.valueOf(setting_string), Boolean.valueOf(setting_value_string));
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                GameSessionHandler.sendMessage(game_code, session, String.format("game_setting;%s;%s", setting_string, setting_value_string));
                 break;
 
             case "start_game":
