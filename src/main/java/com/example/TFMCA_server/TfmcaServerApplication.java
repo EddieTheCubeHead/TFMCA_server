@@ -13,9 +13,10 @@ public class TfmcaServerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(TfmcaServerApplication.class, args);
-		System.out.println("QA");
 		try {
-			Thread.sleep(10000);
+			//Dockerilla kestää välillä SQL-skriptin ajamisessa. Odotellaan tämä rauhassa
+			System.out.println("Giving docker time to setup MySQL server.");
+			Thread.sleep(30000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

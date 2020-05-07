@@ -178,7 +178,7 @@ public class DatabaseHandler {
     public static void saveEvent(CardEventPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, player, card, metadata, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, player, card, metadata, actionNumber, generation, cardExtra) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {
@@ -193,6 +193,7 @@ public class DatabaseHandler {
         save_event.setInt(4, packet.metadata);
         save_event.setInt(5, action_number);
         save_event.setInt(6, generation);
+        save_event.setString(7, packet.extra_card);
 
         save_event.executeUpdate();
         save_event.close();
@@ -223,7 +224,7 @@ public class DatabaseHandler {
     public static void saveEvent(TileEventPacket packet, String game_code, Integer action_number, Integer generation) throws SQLException {
         PreparedStatement save_event;
 
-        String save_string = "INSERT INTO tfmca.cardplayevents (parentGame, player, tileType, xCoord, yCoord, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?)";
+        String save_string = "INSERT INTO tfmca.tileevents (parentGame, player, tileType, xCoord, yCoord, actionNumber, generation) VALUES ((SELECT id FROM tfmca.games WHERE id=?), (SELECT userName FROM tfmca.users WHERE userName=?), ?, ?, ?, ?, ?)";
 
         Integer game_id = getGameId(game_code);
         if (game_id == null) {

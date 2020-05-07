@@ -2,16 +2,24 @@ package com.example.TFMCA_server.gameEvents;
 
 public enum Placeable {
     OCEAN,
+    FLOOD_OCEAN,
     GREENERY,
+    LAND_OCEAN,
+    OCEAN_GREENERY,
     CITY,
+    RESEARCH_OUTPOST,
+    URBANIZED_AREA,
     NOCTIS,
     LAVA_FLOW,
     CAPITAL,
     ECOLOGICAL_ZONE,
     MINING_AREA,
+    MINING_RIGHTS,
     MOHOLE,
     NATURAL_RESERVE,
     NUCLEAR_ZONE,
     RESTRICTED_AREA,
-    RESERVED_AREA
+    COMMERCIAL_DISTRICT,
+    RESERVED_AREA,
+    VOLCANIC_CITY
 }
